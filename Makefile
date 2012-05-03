@@ -14,6 +14,8 @@ LIB_SRC=$(filter-out src/mongrel2.c,${SOURCES})
 LIB_OBJ=$(filter-out src/mongrel2.o,${OBJECTS})
 TEST_SRC=$(wildcard tests/*_tests.c)
 TESTS=$(patsubst %.c,%,${TEST_SRC})
+HTTP_PARSER_HEADERS=$(wildcard src/http11/*.h)
+HTTP_PARSER_TARGET=$(PREFIX)/include/http11/
 MAKEOPTS=OPTFLAGS="${NOEXTCFLAGS} ${OPTFLAGS}" OPTLIBS="${OPTLIBS}" LIBS="${LIBS}" DESTDIR="${DESTDIR}" PREFIX="${PREFIX}"
 
 all: bin/mongrel2 tests m2sh
@@ -114,6 +116,14 @@ valgrind:
 
 %.o: %.S
 	$(CC) $(CFLAGS) -c $< -o $@
+
+lib_http11_parser:
+	$(CC) -I src/ -fPIC -shared src/http11/http11_parser.c -o src/http11/libhttp11_parser.so
+
+lib_http11_parser_install:
+	install src/http11/libhttp11_parser.so $(PREFIX)/lib/
+	mkdir -p $(HTTP_PARSER_TARGET)
+	@$(foreach i, $(HTTP_PARSER_HEADERS), cp $i $(HTTP_PARSER_TARGET);)
 
 coverage: NOEXTCFLAGS += -fprofile-arcs -ftest-coverage
 coverage: LIBS += -lgcov
